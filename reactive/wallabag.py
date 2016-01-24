@@ -43,6 +43,7 @@ def install_wallabag():
 def configure_webapp():
     fix_permissions()
     write_vhost()
+    hookenv.status_set('active', 'Ready')
 
 
 def fix_permissions():
