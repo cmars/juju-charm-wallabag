@@ -1,7 +1,7 @@
 # Wallabag
 
 - Author: The Wallabag Developers, see https://www.wallabag.org/
-- Maintainer: Casey Marshall <juju@cmars.tech>
+- Maintainer: Casey Marshall <casey.marshall@canonical.com>
 
 # Overview
 
