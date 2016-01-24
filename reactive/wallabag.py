@@ -47,6 +47,7 @@ def configure_webapp():
 
 
 def fix_permissions():
+    shutil.chown('/srv/wallabag', user="www-data", group="www-data")
     for root, dirs, files in os.walk('/srv/wallabag'):
         for name in dirs:
             shutil.chown(os.path.join(root, name), user="www-data", group="www-data")
