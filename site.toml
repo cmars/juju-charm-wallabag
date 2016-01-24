@@ -1,0 +1,3 @@
+"packages" = ["php5-fpm", "php5-tidy", "php5-curl", "php5-gd", "php-gettext", "php5-sqlite"]
+"app_path" = "/srv/wallabag"
+"server_name" = "wallabag"
