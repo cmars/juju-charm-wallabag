@@ -7,3 +7,11 @@ options:
     type: string
     description: public hostname of server
     default: wallabag
+  username:
+    type: string
+    description: wallabag account username
+    default: wallabag
+  password:
+    type: string
+    description: wallabag account password
+    default: wallabag

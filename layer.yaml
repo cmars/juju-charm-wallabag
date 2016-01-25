@@ -1,6 +1,9 @@
 includes:
-- 'layer:basic'
-- 'layer:nginx'
-- 'interface:mysql'
-- 'interface:pgsql'
-
+    - 'layer:basic'
+    - 'layer:nginx'
+    - 'interface:mysql'
+options:
+    basic:
+        packages:
+            - '--no-install-recommends'
+            - php5-cli
