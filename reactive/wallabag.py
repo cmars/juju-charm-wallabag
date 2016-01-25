@@ -93,7 +93,8 @@ def write_vhost():
 
 @when('nginx.available', 'website.available')
 def configure_website(website):
-    website.configure(port=config['port'])
+    conf = hookenv.config()
+    website.configure(port=conf['port'])
 
 
 @when('wallabag.available')
@@ -106,6 +107,7 @@ def setup_sqlite_via_config():
         setup_sqlite()
     else:
         remove_state('wallabag.available')
+    hookenv.status_set('active', 'ready - sqlite database')
 
 
 def setup_sqlite():
@@ -126,6 +128,8 @@ def setup_mysql_via_config(db):
     conf = hookenv.config()
     if conf.changed('username') or conf.changed('password'):
         setup_mysql(db)
+    else:
+        hookenv.status_set('active', 'ready - mysql database')
 
 
 @when('wallabag.configured', 'mysql.available')
