@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 from subprocess import check_call, Popen, PIPE
 
@@ -6,12 +7,15 @@ from charms.reactive import hook, when, when_not, set_state, remove_state, is_st
 from charmhelpers.fetch import archiveurl, apt_install, apt_update
 from charmhelpers.payload.archive import extract_tarfile
 from charmhelpers.core import hookenv
+from charmhelpers.core.templating import render
+from charmhelpers.core.unitdata import kv
+
 import requests
 
 from nginxlib import configure_site
 
 APP_PATH    = '/srv/wallabag'
-
+VERSION     = '1.9.1-b'
 
 @hook('install')
 def install():
@@ -34,15 +38,16 @@ def install():
 
 def install_wallabag():
     conf = hookenv.config()
-    version = conf.get('version')
     handler = archiveurl.ArchiveUrlFetchHandler()
-    hookenv.status_set('maintenance', 'downloading wallabag %s' % (version))
-    handler.download('https://codeload.github.com/wallabag/wallabag/tar.gz/%s' % (version),
+    hookenv.status_set('maintenance', 'downloading wallabag %s' % (VERSION))
+
+    # Only 1.9.1-b has been tested with, and so, supported by this charm
+    handler.download('https://codeload.github.com/wallabag/wallabag/tar.gz/%s' % (VERSION),
         dest='/srv/wallabag.tar.gz')
 
     hookenv.status_set('maintenance', 'unpacking wallabag archive')
     extract_tarfile('/srv/wallabag.tar.gz', destpath="/srv")
-    os.rename('/srv/wallabag-%s' % (version), APP_PATH)
+    os.rename('/srv/wallabag-%s' % (VERSION), APP_PATH)
 
 
 def reset_wallabag():
@@ -50,8 +55,7 @@ def reset_wallabag():
     if os.path.exists(config_path):
         os.unlink(config_path)
     conf = hookenv.config()
-    version = conf.get('version')
-    check_call(['tar', '--strip-components=1', '-xzvf', '/srv/wallabag.tar.gz', 'wallabag-%s/install' % (version)],
+    check_call(['tar', '--strip-components=1', '-xzvf', '/srv/wallabag.tar.gz', 'wallabag-%s/install' % (VERSION)],
         cwd=APP_PATH)
 
 
@@ -112,7 +116,7 @@ def setup_sqlite_via_config():
 
 def setup_sqlite():
     reset_wallabag()
-    setup('sqlite', {})
+    setup('sqlite', None)
     set_state('wallabag.connected.sqlite')
 
 
@@ -140,21 +144,15 @@ def setup_mysql_via_relation(db):
 def setup_mysql(db):
     apt_install(['php5-mysql', 'mysql-client'])
     reset_wallabag()
-    reset_mysql(db)
     setup('mysql', db)
     remove_state('mysql.available')
     remove_state('wallabag.connected.sqlite')
     set_state('wallabag.connected.mysql')
 
 
-def reset_mysql(db):
-    cmdline = ['mysql', '-h', db.host(), '-u', db.user(), '--password=%s' % db.password(), db.database()]
-    p = Popen(cmdline, stdin=PIPE, universal_newlines=True)
-    conf = hookenv.config()
-    out, errs = p.communicate(input="DELETE FROM users WHERE name = '%s'" % (conf['username']))
-
-
 def setup(db_engine, db):
+    unit_data = kv()
+
     conf = hookenv.config()
     payload = {
         'db_engine':      db_engine,
@@ -163,7 +161,7 @@ def setup(db_engine, db):
         'email':          '',
         'install':        'install',
     }
-    if db_engine == 'mysql':
+    if db and db_engine == 'mysql':
         payload.update({
             'mysql_server':   db.host(),
             'mysql_database': db.database(),
@@ -172,9 +170,39 @@ def setup(db_engine, db):
         })
     r = requests.post('http://localhost', data=payload)
 
+    salt_key = '%s-salt' % (db_engine)
+    salt = unit_data.get(salt_key, None)
+    if salt is None:
+        salt = read_salt()
+        unit_data.set(salt_key, salt)
+ 
     install_path = os.path.join(APP_PATH, 'install')
     if os.path.isdir(install_path):
         shutil.rmtree(install_path)
 
+    # Go ahead and write the config PHP out. In some cases, the above POST
+    # errors out before this is done properly, especially in the case where a
+    # relation to a prior wallabag database is restored.
+    render(source='config.inc.php',
+        target=os.path.join(APP_PATH, 'inc', 'poche', 'config.inc.php'),
+        owner='www-data',
+        group='www-data',
+        perms=0o644,
+        context={
+            'conf': conf,
+            'db': db,
+            'db_engine': db_engine,
+            'salt': salt,
+        })
+
     hookenv.status_set('active', 'ready - %s database' % (db_engine))
     remove_state('wallabag.available')
+
+
+def read_salt():
+    with open(os.path.join(APP_PATH, 'inc', 'poche', 'config.inc.php'), 'r', encoding='utf-8') as f:
+        for l in f.readlines():
+            if "'SALT'" in l:
+                m = re.match(r"@define \('SALT', '(?P<salt>[^']+)'\);", l)
+                return m.group('salt')
+    return None

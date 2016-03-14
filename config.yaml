@@ -1,8 +1,4 @@
 options:
-  version:
-    type: string
-    description: release version of wallabag to install
-    default: 1.9.1-b
   server_name:
     type: string
     description: public hostname of server

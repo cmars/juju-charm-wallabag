@@ -1,0 +1,90 @@
+<?php
+/**
+ * wallabag, self hostable application allowing you to not miss any content anymore
+ *
+ * @category   wallabag
+ * @author     Nicolas Lœuillet <nicolas@loeuillet.org>
+ * @copyright  2013
+ * @license    http://opensource.org/licenses/MIT see COPYING file
+ */
+
+@define ('SALT', '{{ salt }}'); # put a strong string here
+@define ('LANG', 'en_EN.utf8');
+
+@define ('STORAGE', '{{ db_engine }}'); # postgres, mysql or sqlite
+
+@define ('STORAGE_SQLITE', ROOT . '/db/poche.sqlite'); # if you are using sqlite, where the database file is located
+
+# only for postgres & mysql
+{% if db %}
+@define ('STORAGE_SERVER', '{{ db.host() }}');
+@define ('STORAGE_DB', '{{ db.database() }}');
+@define ('STORAGE_USER', '{{ db.user() }}');
+@define ('STORAGE_PASSWORD', '{{ db.password() }}');
+{% endif %}
+@define ('MYSQL_USE_UTF8MB4', FALSE); // This should be false unless you know what it is
+
+#################################################################################
+# Do not trespass unless you know what you are doing
+#################################################################################
+// Change this if http is running on nonstandard port - i.e is behind cache proxy
+@define ('HTTP_PORT', 80);
+
+// Change this if not using the standart port for SSL - i.e you server is behind sslh
+@define ('SSL_PORT', 443);
+
+// Define this only if you use wallabag behind a proxy and if you encounter problems
+@define ('BASE_URL', ''); 
+
+@define ('MODE_DEMO', FALSE);
+@define ('DEBUG_POCHE', FALSE);
+
+//default level of error reporting in application. Developers should override it in their config.inc.php: set to E_ALL.
+@define ('ERROR_REPORTING', E_ALL & ~E_NOTICE);
+
+@define ('DOWNLOAD_PICTURES', FALSE); # This can slow down the process of adding articles
+@define ('REGENERATE_PICTURES_QUALITY', 75);
+@define ('CONVERT_LINKS_FOOTNOTES', FALSE);
+@define ('REVERT_FORCED_PARAGRAPH_ELEMENTS', FALSE);
+@define ('SHARE_TWITTER', FALSE);
+@define ('SHARE_MAIL', TRUE);
+@define ('SHARE_SHAARLI', FALSE);
+@define ('SHAARLI_URL', 'http://myshaarliurl.com');
+@define ('SHARE_EVERNOTE', FALSE);
+@define ('SHARE_DIASPORA', FALSE);
+@define ('DIASPORA_URL', 'http://diasporapod.com'); # Don't add a / at the end
+@define ('FLATTR', FALSE);
+@define ('FLATTR_API', 'https://api.flattr.com/rest/v2/things/lookup/?url=');
+@define ('NOT_FLATTRABLE', '0');
+@define ('FLATTRABLE', '1');
+@define ('FLATTRED', '2');
+@define ('CARROT', FALSE);
+
+// ebook
+@define ('EPUB', TRUE);
+@define ('MOBI', TRUE);
+@define ('PDF', TRUE);
+
+// registration
+@define ('ALLOW_REGISTER', FALSE);
+@define ('SEND_CONFIRMATION_EMAIL', FALSE);
+
+// display or not print link in article view
+@define ('SHOW_PRINTLINK', '1');
+// display or not percent of read in article view. Affects only default theme.
+@define ('SHOW_READPERCENT', '1');
+@define ('RELOAD_ARTICLE', TRUE);
+@define ('ABS_PATH', 'assets/');
+
+@define ('DEFAULT_THEME', 'baggy');
+
+@define ('THEME', ROOT . '/themes');
+@define ('LOCALE', ROOT . '/locale');
+@define ('CACHE', ROOT . '/cache');
+
+@define ('PAGINATION', '12');
+
+//limit for download of articles during import
+@define ('IMPORT_LIMIT', 5);
+//delay between downloads (in sec)
+@define ('IMPORT_DELAY', 5);
