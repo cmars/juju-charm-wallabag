@@ -23,6 +23,9 @@ Once the charm has installed, you may point a browser to the public IP address
 of the deployed service and complete installation. Then your wallabag will be
 ready to use.
 
+The default username and password to log in to the web application is
+'wallabag'/'wallabag'. Use the 'CONFIG' tab to change your password.
+
 ## TLS termination
 
 You really should protect your Wallabag server with TLS if you're hosting it on
@@ -54,15 +57,28 @@ juju add-relation wallabag mysql
 
 `server_name:` The public hostname of the web server.
 
-`version:` The release version to download and install. Defaults to the latest
-stable release at time of writing (1.9.1-b). This is used to download a release
-tarball from Github.
-
 `username:` and `password:` determine the login for the default wallabag
-account.
+account on installation. Strongly recommended if the initial deployment will be
+publicly accessible.
+
+## Bugs
+
+### Database migration / recovery
+
+When the wallabag charm forms a new database relation to a database that was
+related to wallabag in the past, articles that were saved prior to the relation
+changes will not appear in the wallabag application.
+
+They are still stored in the database, however. The problem is that on database
+reconfiguration, wallabag has assigned the user a new ID which no longer
+matches the old articles.
+
+This can usually be corrected with some `UPDATE entries SET user_id = ...`
+SQL commands on the wallabag database.
 
 # TODO
 
+- An action to assist with database migrations and recovery.
 - Support for PostgreSQL.
 - Amulet tests.
 
